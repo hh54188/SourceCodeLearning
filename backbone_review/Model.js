@@ -87,6 +87,8 @@ var Model = Backbone.Model = function(attributes, options) {
       if (!changing) {
         // 只有在触发第一个set时，才会保留prevAttributes
         this._previousAttributes = _.clone(this.attributes);
+        // 并且第一次的current和prev是一样的
+        // prev相当于对当前的一个快照，在还没有开始set之前两者是一模一样的
         this.changed = {};
       }
       current = this.attributes, prev = this._previousAttributes;
@@ -96,6 +98,16 @@ var Model = Backbone.Model = function(attributes, options) {
 
       // For each `set` attribute, update or delete the current value.
       // 为什么changes和changed不共用？
+      // changed永远存放的是与快照prev相比是否改变
+
+      // 根据下文会根据changes触发属性的change事件，changes存放的是修改过的属性
+      // 但changes和changed有什么不同呢？
+      // 大部分情况下两者是一样的，但是我能想到有一种情况，
+      // 同一个属性在一轮中被设置了多次：
+      // before： age: 1
+      // then: set("age", 2)---trigger something--->set("age",3)---trigger again--->set("age", 4)
+      // after: this.changed["age"] = 4 / changes = ["age", "age", "age"]
+      // changed存放的是该属性经过多次修改最终的值，而changes记录的是触发了多少次的修改，
       for (attr in attrs) {
         val = attrs[attr];
         if (!_.isEqual(current[attr], val)) changes.push(attr);
@@ -110,19 +122,32 @@ var Model = Backbone.Model = function(attributes, options) {
 
       // Trigger all relevant attribute changes.
       if (!silent) {
+        // 猜测:虽然pending在这里被赋予了一个对象，实际上只要保证它为true或false
+        // 它只是一个标志位
         if (changes.length) this._pending = options;
         for (var i = 0, l = changes.length; i < l; i++) {
+          // 为什么还需要第2,3,4个参数？
           this.trigger('change:' + changes[i], this, current[changes[i]], options);
         }
       }
 
       // You might be wondering why there's a `while` loop here. Changes can
       // be recursively nested within `"change"` events.
+      // 如果changing为true，则结束set……
+      // changing实际上是当前一这轮set是否结束的标志位
+
+      // 实际set的情况可能是这样的
+      // set0--->set1--->set2--->set3--->end3--->end2--->end1--->end0
+      // 但还是不理解这里为什么要这样做
+      // 什么情况下这里的changing会是false呢
+      // 注意区分changing 和 this._changeing
       if (changing) return this;
       if (!silent) {
         while (this._pending) {
           options = this._pending;
+          // 猜测：pending只是一个标志位
           this._pending = false;
+          // 这个trigger是干嘛用的？
           this.trigger('change', this, options);
         }
       }
@@ -192,6 +217,7 @@ var Model = Backbone.Model = function(attributes, options) {
       options.success = function(resp) {
         if (!model.set(model.parse(resp, options), options)) return false;
         if (success) success(model, resp, options);
+        // 为什么总是要触发sync?
         model.trigger('sync', model, resp, options);
       };
       wrapError(this, options);
@@ -214,12 +240,20 @@ var Model = Backbone.Model = function(attributes, options) {
 
       options = _.extend({validate: true}, options);
 
+      
       // If we're not waiting and attributes exist, save acts as
       // `set(attr).save(null, opts)` with validation. Otherwise, check if
       // the model will be valid when the attributes, if any, are set.
+      // waiting是为了干什么？
+      // 是等待服务器返回再更新本地？
+      // 还是先更新本地再等待服务器返回？
       if (attrs && !options.wait) {
         if (!this.set(attrs, options)) return false;
       } else {
+        // 有3种情况
+        // attrs: false / options.wait: false
+        // attrs: false / options.wait: true
+        // attrs: true / options.wait: true
         if (!this._validate(attrs, options)) return false;
       }
 
