@@ -6,6 +6,19 @@ var Model = Backbone.Model = function(attributes, options) {
     if (options.collection) this.collection = options.collection;
     if (options.parse) attrs = this.parse(attrs, options) || {};
     attrs = _.defaults({}, attrs, _.result(this, 'defaults'));
+    /*
+      defaults_.defaults(object, *defaults)
+
+      Fill in undefined properties in object with values from the defaults objects, 
+      and return the object. 
+      As soon as the property is filled, further defaults will have no effect.    
+
+      _.result(object, property) 
+
+      If the value of the named property is a function 
+      then invoke it with the object as context; 
+      otherwise, return it.
+    */
     this.set(attrs, options);
     this.changed = {};
     this.initialize.apply(this, arguments);
@@ -280,6 +293,8 @@ var Model = Backbone.Model = function(attributes, options) {
       };
       wrapError(this, options);
 
+      // 为什么在这里还能判断是否是新的Model？
+      // 在初始化的时候不是应该就添加了idAttribute？
       method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
       if (method === 'patch') options.attrs = attrs;
       xhr = this.sync(method, this, options);
@@ -341,6 +356,9 @@ var Model = Backbone.Model = function(attributes, options) {
 
     // A model is new if it has never been saved to the server, and lacks an id.
     isNew: function() {
+      // isAttribute这个值是否存在？
+      // 如果不存在表示是新的model
+      // 添加model的过程一定是在new的时候
       return !this.has(this.idAttribute);
     },
 
