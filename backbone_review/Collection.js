@@ -29,6 +29,8 @@
   // Default options for `Collection#set`.
   // 为什么还要添加“权限”，setOptions为什么要涉及remove？
   // addOptions里为什么要设计remove？
+
+  // 如果默认执行set，会合并相同项，如果没有该属性会默认自动添加
   var setOptions = {add: true, remove: true, merge: true};
   var addOptions = {add: true, remove: false};
 
@@ -47,24 +49,33 @@
     // models' attributes.
     toJSON: function(options) {
       // map方法返回一个新的数组
+      // Collection的实质是一个数组的数据
+      // 为什么不直接返回options呢？options应该应该是object对象啊
       return this.map(function(model){ return model.toJSON(options); });
     },
 
     // Proxy `Backbone.sync` by default.
     sync: function() {
+      // 设计模式：代理模式
       return Backbone.sync.apply(this, arguments);
     },
 
     // Add a model, or list of models to the set.
     add: function(models, options) {
       // 为什么要控制 merge / add / remove ?
+      // 用户可以决定是否合并重复的选项
+      // 如果用户没有指定，默认不合并{merge: false}
+      // （那么估计就抛弃了，具体要看set里面的操作）
+      // 在addOptions中是没有merge选项，
       return this.set(models, _.extend({merge: false}, options, addOptions));
     },
 
     // Remove a model, or a list of models from the set.
     remove: function(models, options) {
       var singular = !_.isArray(models);
+      // [model]这样形成数组会更快吗?比arr = []快
       models = singular ? [models] : _.clone(models);
+      // 始终以数组形式删除
       options || (options = {});
       var i, l, index, model;
       for (i = 0, l = models.length; i < l; i++) {
@@ -81,6 +92,7 @@
         // 为什么需要索引？
         this._removeReference(model, options);
       }
+      // 返回删除的元素
       return singular ? models[0] : models;
     },
 
@@ -95,8 +107,11 @@
       models = singular ? (models ? [models] : []) : _.clone(models);
       var i, l, id, model, attrs, existing, sort;
       // at:Get a model from a collection, specified by index. 
+      // 指定更新某一个modal？
       var at = options.at;
+      // 为什么不直接使用this.model?
       var targetModel = this.model;
+      // 在set的时候应该不需要比较吧，是在add的时候？
       var sortable = this.comparator && (at == null) && options.sort !== false;
       var sortAttr = _.isString(this.comparator) ? this.comparator : null;
       var toAdd = [], toRemove = [], modelMap = {};
@@ -106,16 +121,26 @@
       // Turn bare objects into model references, and prevent invalid models
       // from being added.
       for (i = 0, l = models.length; i < l; i++) {
+        // models是需要被set的属性，参数传入
         attrs = models[i] || {};
+        // 如果传入的一个model是由Backbone.Model构造出的
         if (attrs instanceof Model) {
+          //  根据get的定义
+          // return this._byId[obj] || this._byId[obj.id] || this._byId[obj.cid];
+          // byId中可以存储对象
           id = model = attrs;
+        // 如果是自定义的一个model
         } else {
           id = attrs[targetModel.prototype.idAttribute || 'id'];
         }
 
         // If a duplicate is found, prevent it from being added and
         // optionally merge it into the existing model.
+
+        // 如果对象重复，一定不重复添加
+        // 可选是否合并
         if (existing = this.get(id)) {
+          // 只有在addOptions中的remove是false
           if (remove) modelMap[existing.cid] = true;
           if (merge) {
             attrs = attrs === model ? model.attributes : attrs;
