@@ -174,7 +174,9 @@
       }
 
       // Remove nonexistent models if appropriate.
+      // set金额add在什么情况需要删除？
       if (remove) {
+        // collections.length?
         for (i = 0, l = this.length; i < l; ++i) {
           if (!modelMap[(model = this.models[i]).cid]) toRemove.push(model);
         }
