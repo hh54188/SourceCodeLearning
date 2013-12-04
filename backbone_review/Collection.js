@@ -71,6 +71,7 @@
     },
 
     // Remove a model, or a list of models from the set.
+    // Remove不调用set
     remove: function(models, options) {
       var singular = !_.isArray(models);
       // [model]这样形成数组会更快吗?比arr = []快
@@ -100,6 +101,8 @@
     // removing models that are no longer present, and merging models that
     // already exist in the collection, as necessary. Similar to **Model#set**,
     // the core operation for updating the data contained by the collection.
+
+    // ADD和SET都共用这一个方法
     set: function(models, options) {
       options = _.defaults({}, options, setOptions);
       if (options.parse) models = this.parse(models, options);
@@ -111,11 +114,14 @@
       var at = options.at;
       // 为什么不直接使用this.model?
       var targetModel = this.model;
-      // 在set的时候应该不需要比较吧，是在add的时候？
+      // 是否排序
       var sortable = this.comparator && (at == null) && options.sort !== false;
+      // 按照某个属性排序
       var sortAttr = _.isString(this.comparator) ? this.comparator : null;
       var toAdd = [], toRemove = [], modelMap = {};
-      var add = options.add, merge = options.merge, remove = options.remove;
+      var add = options.add, 
+          merge = options.merge, 
+          remove = options.remove;
       var order = !sortable && add && remove ? [] : false;
 
       // Turn bare objects into model references, and prevent invalid models
@@ -139,18 +145,25 @@
 
         // 如果对象重复，一定不重复添加
         // 可选是否合并
+        // existing：当前collection已经有的，与传入重复的
         if (existing = this.get(id)) {
           // 只有在addOptions中的remove是false
+          // modelMap与toAdd / toRemove有什么区别？为什么不直接放toRemove中？
           if (remove) modelMap[existing.cid] = true;
+          // 如果有相同项，但是允许合并的话
           if (merge) {
             attrs = attrs === model ? model.attributes : attrs;
             if (options.parse) attrs = existing.parse(attrs, options);
             existing.set(attrs, options);
             if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;
           }
+          // 把已经合并的赋值给传入的
           models[i] = existing;
 
         // If this is a new, valid model, push it to the `toAdd` list.
+        // add参数在setOption和addOption中都是true
+        // 如果不是上面重复的情况，就应该是下面这种add的情况
+        // 为什么还要判断add？
         } else if (add) {
           model = models[i] = this._prepareModel(attrs, options);
           if (!model) continue;
@@ -172,6 +185,7 @@
       if (toAdd.length || (order && order.length)) {
         if (sortable) sort = true;
         this.length += toAdd.length;
+        // 指定插入某个位置
         if (at != null) {
           for (i = 0, l = toAdd.length; i < l; i++) {
             this.models.splice(at + i, 0, toAdd[i]);
@@ -365,6 +379,7 @@
 
     // Internal method to create a model's ties to a collection.
     _addReference: function(model, options) {
+      // cid和id有什么区别？
       this._byId[model.cid] = model;
       if (model.id != null) this._byId[model.id] = model;
       if (!model.collection) model.collection = this;
