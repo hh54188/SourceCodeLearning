@@ -1,3 +1,31 @@
+/*
+  Listening for changes to the model:
+    var Person = Backbone.Model.extend({
+      defaults: {
+        name: "lee",
+        age: 22,
+        city: "Beijing"
+      },
+      initialize: function () {
+        var _this = this;
+
+        this.on("change:name", function () {
+          console.log("CHANGE:NAME");
+          _this.set("age", "23");
+        });
+
+        this.on("change:age", function () {
+          console.log("CHANGE:AGE");
+          _this.set("city", "NY");
+        });
+
+        this.on("change:city", function () {
+          console.log("CHANGE:CITY");
+        })
+      }
+    });
+*/
+
 var Model = Backbone.Model = function(attributes, options) {
     var attrs = attributes || {};
     options || (options = {});

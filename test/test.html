@@ -11,23 +11,35 @@
 	<script type="text/javascript" src="../origin/ember-1.2.0.js"></script>-->
 
 	<script type="text/javascript">
-		// var modal = "person"
-		// var start = +new Date();
-		// for (var i = 0; i < 100 * 100 * 100; i++) {
-		// 	var arr = [modal];
-		// }
-		// console.log("COST------>", +new Date() - start);
+		var Person = Backbone.Model.extend({
+			defaults: {
+				name: "lee",
+				age: 22,
+				city: "Beijing"
+			},
+			initialize: function () {
+				var _this = this;
 
-		// var modal = "person"
-		// var start = +new Date();
-		// for (var i = 0; i < 100 * 100 * 100; i++) {
-		// 	var arr = new Array;
-		// 	arr.push(modal);
-		// }
-		// console.log("COST------>", +new Date() - start);		
+				this.on("change:name", function () {
+					console.log("CHANGE:NAME");
+					_this.set("age", "23");
+				});
+
+				this.on("change:age", function () {
+					console.log("CHANGE:AGE");
+					_this.set("city", "NY");
+				});
+
+				this.on("change:city", function () {
+					console.log("CHANGE:CITY");
+				})
+			}
+		});
+
+		var person = new Person();
 	</script>
 </head>
 <body>
-	<div id="test" style="width: 20px;height: 20px;background: black;"></div>
+	<!-- <div id="test" style="width: 20px;height: 20px;background: black;"></div> -->
 </body>
 </html>
