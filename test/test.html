@@ -20,23 +20,20 @@
 			initialize: function () {
 				var _this = this;
 
-				this.on("change:name", function () {
+				this.on("change:name", function (curObject, attrValue, options) {
+
 					console.log("CHANGE:NAME");
 					_this.set("age", "23");
 				});
 
 				this.on("change:age", function () {
 					console.log("CHANGE:AGE");
-					_this.set("city", "NY");
 				});
-
-				this.on("change:city", function () {
-					console.log("CHANGE:CITY");
-				})
 			}
 		});
 
 		var person = new Person();
+		person.set('name', 'mike');
 	</script>
 </head>
 <body>

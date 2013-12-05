@@ -9,24 +9,25 @@
       initialize: function () {
         var _this = this;
 
-        this.on("change:name", function () {
+        this.on("change:name", function (curObject, attrValue, options) {
+
           console.log("CHANGE:NAME");
           _this.set("age", "23");
         });
 
         this.on("change:age", function () {
           console.log("CHANGE:AGE");
-          _this.set("city", "NY");
         });
-
-        this.on("change:city", function () {
-          console.log("CHANGE:CITY");
-        })
       }
     });
+
+    var person = new Person();
+    person.set('name', 'mike');
 */
 
 var Model = Backbone.Model = function(attributes, options) {
+    // 这些语句都是在实例化一个对象时才会执行
+    // 在new Model()的时候, Model就是一个函数
     var attrs = attributes || {};
     options || (options = {});
     this.cid = _.uniqueId('c');
@@ -165,9 +166,13 @@ var Model = Backbone.Model = function(attributes, options) {
       if (!silent) {
         // 猜测:虽然pending在这里被赋予了一个对象，实际上只要保证它为true或false
         // 它只是一个标志位
+        // 即使options为空对象，也为true：if ({}) return true;
         if (changes.length) this._pending = options;
         for (var i = 0, l = changes.length; i < l; i++) {
           // 为什么还需要第2,3,4个参数？
+          // curObject: 当前被改变属性的对象
+          // attrValue: 被改变对象的值
+          // options: set时候的选项
           this.trigger('change:' + changes[i], this, current[changes[i]], options);
         }
       }
@@ -180,8 +185,12 @@ var Model = Backbone.Model = function(attributes, options) {
       // 实际set的情况可能是这样的
       // set0--->set1--->set2--->set3--->end3--->end2--->end1--->end0
       // 但还是不理解这里为什么要这样做
-      // 什么情况下这里的changing会是false呢
       // 注意区分changing 和 this._changeing
+
+      // 这个changing是一个关键，标志着进入递归全部执行完毕，
+      // 回到最初外层的set，是时候结束了
+      // 因为changing只有在刚进入set的时候才会是false
+      // 详情可以跟踪开头的代码
       if (changing) return this;
       if (!silent) {
         while (this._pending) {
