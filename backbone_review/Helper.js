@@ -1,6 +1,3 @@
-// Create the default Backbone.history.
-  Backbone.history = new History;
-
   // Helpers
   // -------
 
@@ -14,6 +11,11 @@
     // The constructor function for the new subclass is either defined by you
     // (the "constructor" property in your `extend` definition), or defaulted
     // by us to simply call the parent's constructor.
+    /*
+      _.has = function(obj, key) {
+        return hasOwnProperty.call(obj, key);
+      };
+    */    
     if (protoProps && _.has(protoProps, 'constructor')) {
       child = protoProps.constructor;
     } else {

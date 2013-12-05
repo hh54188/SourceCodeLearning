@@ -319,3 +319,6 @@
     }
 
   });
+
+// Create the default Backbone.history.
+  Backbone.history = new History;

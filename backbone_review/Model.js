@@ -33,6 +33,9 @@ var Model = Backbone.Model = function(attributes, options) {
     this.cid = _.uniqueId('c');
     this.attributes = {};
     if (options.collection) this.collection = options.collection;
+    // options.parse到底有什么用？
+    // this.parse: **parse** converts a response into the hash of attributes to be `set` on
+    // the model.
     if (options.parse) attrs = this.parse(attrs, options) || {};
     attrs = _.defaults({}, attrs, _.result(this, 'defaults'));
     /*
@@ -136,6 +139,12 @@ var Model = Backbone.Model = function(attributes, options) {
       current = this.attributes, prev = this._previousAttributes;
 
       // Check for changes of `id`.
+      /*
+        {
+          idAttribute: "_id",
+          
+        }
+      */
       if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];
 
       // For each `set` attribute, update or delete the current value.
@@ -265,6 +274,7 @@ var Model = Backbone.Model = function(attributes, options) {
       var model = this;
       var success = options.success;
       options.success = function(resp) {
+        // 这里的model.parse又是什么
         if (!model.set(model.parse(resp, options), options)) return false;
         if (success) success(model, resp, options);
         // 为什么总是要触发sync?
